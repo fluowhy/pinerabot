@@ -39,6 +39,15 @@ class LSTM(nn.Module):
 		return output, h_n, c_n, tag_space
 
 
+def vec2word(x, labels):
+	sen = ""
+	words = []
+	for i in x:
+		words.append(labels[i]) 
+	s = " "
+	return s.join(words)
+
+
 device = "cuda"
 
 labels = np.load("labels.npy")
@@ -47,28 +56,27 @@ nlabels = len(labels)
 embedding_dim = 100
 hidden_dim = 10
 eos = np.nonzero(labels=="eos")[0][0]
-print("eos {}".format(eos))
 x_init_numpy = np.random.randint(0, nlabels)
 x_init = torch.tensor(x_init_numpy).to(device)
+
+softmax = torch.nn.Softmax(dim=0)
 
 model = LSTM(embedding_dim, hidden_dim, nlabels).to(device)
 
 model.load_state_dict(torch.load("models/lstm_pin.pth"))
 sentence = []
+maxwords = 20
 with torch.no_grad():
 	model.eval()
-	while True:
-		print(x_init)
+	for i in range(maxwords):
 		y = model.word_embeddings(x_init)
 		output, (h_n, c_n) = model.lstm(y.view(1, 1, -1))
-		print(h_n)
-		next_x = np.argmax(model.hidden2tag(output).squeeze().cpu().numpy())
-		if next_x==eos:
+		prob = softmax(model.hidden2tag(output.squeeze())).cpu().numpy()
+		next_word = np.random.choice(np.arange(len(prob)), p=prob)
+		if next_word==eos:
 			break
 		else:
-			sentence.append(next_x)
-			x_init = torch.tensor(next_x).to(device)
-		print(sentence)
-		input("hola")
-
-pdb.set_trace()
+			sentence.append(next_word) 
+			x_init = torch.tensor(next_word).long().to(device)
+gen_sentence = vec2word(sentence, labels)
+print(gen_sentence)
