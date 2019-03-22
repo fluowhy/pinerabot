@@ -45,3 +45,4 @@ We suggest to make a [virtual environment](https://virtualenv.pypa.io/en/latest/
 - [ ] Add requirements file.
 - [ ] Add conda environments option.
 - [ ] Add introduction.
+- [ ] Clean code.
