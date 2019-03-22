@@ -12,6 +12,8 @@ from torch.nn.utils.rnn import pack_padded_sequence
 from torch.nn.utils.rnn import pad_packed_sequence
 import torch.utils.data
 import time
+from sklearn.model_selection import train_test_split
+from tqdm import tqdm
 
 
 class LSTM(nn.Module):
@@ -64,28 +66,49 @@ for i, sen in enumerate(sentences):
 	x_train.append(torch.tensor(sen[:-1], dtype=torch.long).to(device))
 	y_train.append(torch.tensor(sen[1:], dtype=torch.long).to(device))
 
-x_train.sort(key=myFunc, reverse=True)
-y_train.sort(key=myFunc, reverse=True)
+# pad sequences
 x_train = pad_sequence(x_train, batch_first=True)
 y_train = pad_sequence(y_train, batch_first=True)
 
-n_samples, samples_length = x_train.shape
-input_lengths = samples_length - (x_train==0).sum(dim=1)
+# select train and test sentences
+index = np.arange(x_train.shape[0])
+train_index, test_index = train_test_split(index, test_size=0.2, shuffle=True)
 
+x_test = x_train[test_index]
+x_train = x_train[train_index]
+y_test = y_train[test_index]
+y_train = y_train[train_index]
 
-train_dataset = torch.utils.data.TensorDataset(x_train, y_train, input_lengths)
-#test_dataset = torch.utils.data.TensorDataset(x_test, y_test)
+# sort samples by inverse number of zeros (padded inputs)
+nz = (x_train==0).sum(dim=1)
+_, ind = torch.sort(nz, descending=False)
+x_train = x_train[ind]
+y_train = y_train[ind]
 
-# make dataloader
+nz = (x_test==0).sum(dim=1)
+_, ind = torch.sort(nz, descending=False)
+x_test = x_test[ind]
+y_test = y_test[ind]
+
+# make dataset and dataloader
+_, samples_length = x_train.shape
+
+train_input_lengths = samples_length - (x_train==0).sum(dim=1)
+test_input_lengths = samples_length - (x_test==0).sum(dim=1)
+
+train_dataset = torch.utils.data.TensorDataset(x_train, y_train, train_input_lengths)
+test_dataset = torch.utils.data.TensorDataset(x_test, y_test, test_input_lengths)
 
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False)
-#test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=True)
-#pdb.set_trace()
+test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False)
+
+# network configuration
+
 embedding_dim = 100
 hidden_dim = 10
 
-model = LSTM(embedding_dim, hidden_dim, len(labels)).to(device)
-model.load_state_dict(torch.load("models/lstm_pin.pth"))
+model = LSTM(embedding_dim, hidden_dim, len(labels) + 1).to(device)
+#model.load_state_dict(torch.load("models/lstm_pin.pth"))
 cel = torch.nn.CrossEntropyLoss(ignore_index=0)#weight=weights)
 bce = torch.nn.BCELoss()
 msel = torch.nn.MSELoss()
@@ -98,18 +121,27 @@ for epoch in range(args.epochs):
 	model.train()
 	train_loss = 0
 	ti = time.time()
-	for idx, (batch, y_true, batch_lengths) in enumerate(train_loader):
-		model.zero_grad()
+	for idx, (batch, y_true, batch_lengths) in enumerate(tqdm(train_loader)):
 		output, hn, cn, clf = model(batch, batch_lengths)
 		clf = clf.transpose(1, 2)
 		loss = cel(clf, y_true)
 		loss.backward()
 		optimizer.step()
 		train_loss += loss.item()
+	train_loss /= (idx + 1)
+	test_loss = 0
+	model.eval()
+	with torch.no_grad():
+		for idx, (batch, y_true, batch_lengths) in enumerate(tqdm(test_loader)):
+			output, hn, cn, clf = model(batch, batch_lengths)
+			clf = clf.transpose(1, 2)
+			loss = cel(clf, y_true)
+			test_loss += loss.item()
+	test_loss /= (idx + 1)
 	tf = time.time()
-	print("Epoch {} Loss {:.2f} Time {:.2f}".format(epoch, train_loss/(idx + 1), (tf - ti)/60))
-	if train_loss<best_loss:
+	print("Epoch {:03d} | Train loss {:.3f} | Test loss {:.3f} | Time {:.2f} min.".format(epoch, train_loss, test_loss, (tf - ti)/60))
+	if test_loss<best_loss:
 		print("Saving")
 		torch.save(model.state_dict(), "models/lstm_pin.pth")
-		best_loss = train_loss
+		best_loss = test_loss
 		best_epoch = epoch

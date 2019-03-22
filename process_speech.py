@@ -21,8 +21,6 @@ def cleanSentence(x):
 
 
 le = LabelEncoder()
-
-
 dis = np.load("discursos.npy")
 sen = []
 numsen = []
