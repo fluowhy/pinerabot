@@ -22,7 +22,7 @@ def cleanSentence(x):
 
 le = LabelEncoder()
 
-"""
+
 dis = np.load("discursos.npy")
 sen = []
 numsen = []
@@ -46,4 +46,3 @@ for i, ss in enumerate(sen):
 	if i%1000==0:
 		np.save("num_sentences", numsen)
 np.save("num_sentences", numsen)
-"""

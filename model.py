@@ -17,25 +17,18 @@ class LSTM(nn.Module):
 	def __init__(self, embedding_dim, hidden_dim, vocab_size):
 		super(LSTM, self).__init__()
 		self.hidden_dim = hidden_dim
-
 		self.word_embeddings = nn.Embedding(vocab_size, embedding_dim)
-
-		# The LSTM takes word embeddings as inputs, and outputs hidden states
-		# with dimensionality hidden_dim.
 		self.lstm = nn.LSTM(input_size=embedding_dim, hidden_size=hidden_dim, num_layers=1)
+		self.hidden2logit = nn.Linear(hidden_dim, vocab_size)
 
-		self.hidden2tag = nn.Linear(hidden_dim, vocab_size)
 
 	def forward(self, sentence, input_lengths):
 		embd = self.word_embeddings(sentence)
-		# embedding works with padded samples
-		# pack embedded samples
 		packed_input = pack_padded_sequence(embd, input_lengths, batch_first=True)
 		packed_output, (h_n, c_n) = self.lstm(packed_input)
 		output, _ = pad_packed_sequence(packed_output, batch_first=True, total_length=samples_length)		
-		tag_space = self.hidden2tag(output)#output.view(len(sentence), -1))
-		#tag_scores = F.log_softmax(tag_space, dim=1)
-		return output, h_n, c_n, tag_space
+		logit = self.hidden2logit(output)
+		return output, h_n, c_n, logit
 
 
 def myFunc(e):
@@ -53,7 +46,7 @@ parser.add_argument('--competition', type=bool, default=False, metavar='C', help
 parser.add_argument("--lr", type=float, default=1e-3, metavar="L", help="learning rate")
 args = parser.parse_args()
 
-device = torch.device("cuda" if args.cuda and torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if args.cuda and torch.cuda.is_available() else "cpu")
 print(device)
 
 labels = np.load("labels.npy")
@@ -107,7 +100,6 @@ for epoch in range(args.epochs):
 		model.zero_grad()
 		output, hn, cn, clf = model(batch, batch_lengths)
 		clf = clf.transpose(1, 2)
-		#pdb.set_trace()
 		loss = cel(clf, y_true)
 		loss.backward()
 		optimizer.step()
