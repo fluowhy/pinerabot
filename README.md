@@ -38,6 +38,7 @@ We suggest to make a [virtual environment](https://virtualenv.pypa.io/en/latest/
 
 - [ ] Add Usage section.
 - [ ] Check model capacity.
+- [ ] Add regularization!.
 - [ ] Code twitter bot.
 - [ ] Automatize tweets.
 - [ ] Try bidirectional lstm.
