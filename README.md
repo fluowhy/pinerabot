@@ -46,3 +46,4 @@ We suggest to make a [virtual environment](https://virtualenv.pypa.io/en/latest/
 - [ ] Add conda environments option.
 - [ ] Add introduction.
 - [ ] Clean code.
+- [ ] **Make al numbers one class**.

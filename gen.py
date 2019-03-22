@@ -37,7 +37,7 @@ x_init = torch.tensor(x_init_numpy).to(device)
 
 softmax = torch.nn.Softmax(dim=0)
 
-model = LSTM(embedding_dim, hidden_dim, nh, nlabels + 1, samples_length).to(device)
+model = LSTM(embedding_dim, hidden_dim, nh, nlabels + 1).to(device)
 
 model.load_state_dict(torch.load("models/lstm_pin.pth"))
 sentence = []

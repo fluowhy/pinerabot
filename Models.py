@@ -5,7 +5,7 @@ from torch.nn.utils.rnn import pad_packed_sequence
 
 
 class LSTM(nn.Module):
-	def __init__(self, embedding_dim, hidden_dim, nh, vocab_size, samples_length):
+	def __init__(self, embedding_dim, hidden_dim, nh, vocab_size, samples_length=5):
 		super(LSTM, self).__init__()
 		self.hidden_dim = hidden_dim
 		self.word_embeddings = nn.Embedding(vocab_size, embedding_dim)
@@ -13,13 +13,11 @@ class LSTM(nn.Module):
 		self.fc1 = nn.Linear(hidden_dim, nh)
 		self.fc2 = nn.Linear(nh, vocab_size)
 		self.samples_length = samples_length
-		self.relu = torch.nn.ReLU()
-		self.batchnorm = torch.nn.BatchNorm1d(samples_length)
 		layers = []
-		layers.append(torch.nn.Linear(hidden_dim, nh))
-		layers.append(torch.nn.BatchNorm1d(samples_length))
-		layers.append(torch.nn.ReLU())
-		layers.append(torch.nn.Linear(nh, vocab_size))
+		layers.append(torch.nn.Linear(hidden_dim, vocab_size))
+		#layers.append(torch.nn.BatchNorm1d(samples_length))
+		#layers.append(torch.nn.ReLU())
+		#layers.append(torch.nn.Linear(nh, vocab_size))
 		self.out = torch.nn.Sequential(*layers)
 
 

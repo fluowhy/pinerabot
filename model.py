@@ -91,7 +91,7 @@ embedding_dim = 100
 hidden_dim = 100
 nh = 200
 
-model = LSTM(embedding_dim, hidden_dim, nh, len(labels) + 1, samples_length).to(device)
+model = LSTM(embedding_dim, hidden_dim, nh, len(labels) + 1, samples_length=samples_length).to(device)
 #model.load_state_dict(torch.load("models/lstm_pin.pth"))
 cel = torch.nn.CrossEntropyLoss(ignore_index=0)#weight=weights)
 bce = torch.nn.BCELoss()
