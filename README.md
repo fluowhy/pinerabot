@@ -47,3 +47,4 @@ We suggest to make a [virtual environment](https://virtualenv.pypa.io/en/latest/
 - [ ] Add introduction.
 - [ ] Clean code.
 - [ ] **Make al numbers one class**.
+- [ ] **Solve labels problem**.
