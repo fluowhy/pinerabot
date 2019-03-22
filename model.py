@@ -14,24 +14,7 @@ import torch.utils.data
 import time
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
-
-
-class LSTM(nn.Module):
-	def __init__(self, embedding_dim, hidden_dim, vocab_size):
-		super(LSTM, self).__init__()
-		self.hidden_dim = hidden_dim
-		self.word_embeddings = nn.Embedding(vocab_size, embedding_dim)
-		self.lstm = nn.LSTM(input_size=embedding_dim, hidden_size=hidden_dim, num_layers=1)
-		self.hidden2logit = nn.Linear(hidden_dim, vocab_size)
-
-
-	def forward(self, sentence, input_lengths):
-		embd = self.word_embeddings(sentence)
-		packed_input = pack_padded_sequence(embd, input_lengths, batch_first=True)
-		packed_output, (h_n, c_n) = self.lstm(packed_input)
-		output, _ = pad_packed_sequence(packed_output, batch_first=True, total_length=samples_length)		
-		logit = self.hidden2logit(output)
-		return output, h_n, c_n, logit
+from Models import *
 
 
 def myFunc(e):
@@ -105,9 +88,10 @@ test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_si
 # network configuration
 
 embedding_dim = 100
-hidden_dim = 10
+hidden_dim = 100
+nh = 200
 
-model = LSTM(embedding_dim, hidden_dim, len(labels) + 1).to(device)
+model = LSTM(embedding_dim, hidden_dim, nh, len(labels) + 1, samples_length).to(device)
 #model.load_state_dict(torch.load("models/lstm_pin.pth"))
 cel = torch.nn.CrossEntropyLoss(ignore_index=0)#weight=weights)
 bce = torch.nn.BCELoss()
