@@ -1,7 +1,5 @@
 # PiñeraBot
 
-To do.
-
 ## Table of contents
 1. [Requirements](#requirements)
 2. [Installation](#installation)
@@ -45,3 +43,4 @@ We suggest to make a [virtual environment](https://virtualenv.pypa.io/en/latest/
 - [ ] Try bidirectional lstm.
 - [ ] Add requirements file.
 - [ ] Add conda environments option.
+- [ ] Add introduction.
