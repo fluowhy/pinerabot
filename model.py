@@ -11,6 +11,7 @@ from torch.nn.utils.rnn import pad_sequence
 from torch.nn.utils.rnn import pack_padded_sequence
 from torch.nn.utils.rnn import pad_packed_sequence
 import torch.utils.data
+import time
 
 
 class LSTM(nn.Module):
@@ -91,6 +92,7 @@ embedding_dim = 100
 hidden_dim = 10
 
 model = LSTM(embedding_dim, hidden_dim, len(labels)).to(device)
+model.load_state_dict(torch.load("models/lstm_pin.pth"))
 cel = torch.nn.CrossEntropyLoss(ignore_index=0)#weight=weights)
 bce = torch.nn.BCELoss()
 msel = torch.nn.MSELoss()
@@ -101,8 +103,8 @@ optimizer = torch.optim.Adamax(model.parameters(), lr=args.lr, weight_decay=wd)
 best_loss = np.inf
 for epoch in range(args.epochs):
 	model.train()
-	print("Epoch {}".format(epoch))
 	train_loss = 0
+	ti = time.time()
 	for idx, (batch, y_true, batch_lengths) in enumerate(train_loader):
 		model.zero_grad()
 		output, hn, cn, clf = model(batch, batch_lengths)
@@ -112,7 +114,8 @@ for epoch in range(args.epochs):
 		loss.backward()
 		optimizer.step()
 		train_loss += loss.item()
-	print("Loss {:.2f}".format(train_loss/idx))
+	tf = time.time()
+	print("Epoch {} Loss {:.2f} Time {:.2f}".format(epoch, train_loss/(idx + 1), (tf - ti)/60))
 	if train_loss<best_loss:
 		print("Saving")
 		torch.save(model.state_dict(), "models/lstm_pin.pth")
