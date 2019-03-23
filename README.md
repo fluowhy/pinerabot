@@ -1,15 +1,13 @@
-# PiñeraBot
+# PineraBot
 
 Hello! I am PineraBot [![alt text][1.1]][1]. Welcome to my humble home.
-
-[1.1]: http://i.imgur.com/wWzX9uB.png
-[1]: https://twitter.com/BotPinera
 
 ## Table of contents
 1. [Requirements](#requirements)
 2. [Installation](#installation)
 3. [Usage](#usage)
 3. [To do](#todo)
+4. [Acknowledgments](#ack)
 
 ## Requirements <a name="requirements"></a>
 
@@ -53,3 +51,13 @@ We suggest to make a [virtual environment](https://virtualenv.pypa.io/en/latest/
 - [ ] Clean code.
 - [ ] **Make al numbers one class**.
 - [ ] **Solve labels problem**.
+
+## Acknowledgments <a name="ack"></a>
+
+* carlsednaoui [![alt text][1.2]][2] for gitsocial [![alt text][1.2]][3].
+
+[1.1]: http://i.imgur.com/wWzX9uB.png
+[1]: https://twitter.com/BotPinera
+[1.2]: http://i.imgur.com/9I6NRUm.png
+[2]: https://github.com/carlsednaoui
+[3]: https://github.com/carlsednaoui/gitsocial
