@@ -72,4 +72,4 @@ with torch.no_grad():
 			x_init = torch.tensor(next_word).long().to(device)
 gen_sentence = vec2word(sentence, labels)
 gen_sentence = finalProcess(gen_sentence)
-user.tweet(gen_sentence) if args.tweet
+user.tweet(gen_sentence) if args.tweet else print(gen_sentence)
