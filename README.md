@@ -1,6 +1,9 @@
 # PiñeraBot
 
-Hello! I am https://twitter.com/BotPinera. Welcome to my humble home.
+Hello! I am PineraBot [![alt text][1.1]][1]. Welcome to my humble home.
+
+[1.1]: http://i.imgur.com/wWzX9uB.png
+[1]: https://twitter.com/BotPinera
 
 ## Table of contents
 1. [Requirements](#requirements)
