@@ -1,5 +1,7 @@
 # PiñeraBot
 
+Hello! I am https://twitter.com/BotPinera. Welcome to my humble home.
+
 ## Table of contents
 1. [Requirements](#requirements)
 2. [Installation](#installation)
