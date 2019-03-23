@@ -42,14 +42,15 @@ We suggest to make a [virtual environment](https://virtualenv.pypa.io/en/latest/
 - [ ] Add Usage section.
 - [ ] Check model capacity.
 - [ ] Add **regularization**.
-- [ ] Code twitter bot.
-- [ ] Automatize tweets.
+- [x] Code twitter bot.
+- [x] Automatize tweets.
+- [ ] Automatize when to tweet.
 - [ ] Try bidirectional lstm.
 - [ ] Add requirements file.
 - [ ] Add conda environments option.
-- [ ] Add introduction.
+- [x] Add description.
 - [ ] Clean code.
-- [ ] **Make al numbers one class**.
+- [ ] **Make all numbers a single class**.
 - [ ] **Solve labels problem**.
 
 ## Acknowledgments <a name="ack"></a>
