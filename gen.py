@@ -29,7 +29,14 @@ def finalProcess(x):
 	return x
 
 
-device = "cuda"
+parser = argparse.ArgumentParser(description="pineraBot")
+parser.add_argument("--cuda", type=bool, default=1, help="enables CUDA training (default 1)")
+parser.add_argument("--tweet", type=bool, default=0, help="enables tweeting (default 0)")
+args = parser.parse_args()
+
+
+device = torch.device("cuda:0" if args.cuda and torch.cuda.is_available() else "cpu")
+print(device)
 user = twitterUser()
 
 labels = np.load("labels.npy")
@@ -65,4 +72,4 @@ with torch.no_grad():
 			x_init = torch.tensor(next_word).long().to(device)
 gen_sentence = vec2word(sentence, labels)
 gen_sentence = finalProcess(gen_sentence)
-user.tweet(gen_sentence)
+user.tweet(gen_sentence) if args.tweet

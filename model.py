@@ -22,13 +22,10 @@ def myFunc(e):
 
 #seed = 1111
 #seed_everything(seed)
-parser = argparse.ArgumentParser(description='PetFinder')
+parser = argparse.ArgumentParser(description="pineraBot")
 parser.add_argument('--batch_size', type=int, default=100, metavar='B', help='input batch size for training (default: 128)')
 parser.add_argument('--epochs', type=int, default=50, metavar='E', help='number of epochs to train (default: 10)')
-parser.add_argument('--cuda', type=int, default=1, help='enables CUDA training')
-parser.add_argument('--show_each', type=int, default=5, metavar='SE', help='show train and test stats each n epochs')
-parser.add_argument('--plot', type=bool, default=False, metavar='P', help='plot train and test stats each n epochs')
-parser.add_argument('--competition', type=bool, default=False, metavar='C', help="code for competition or not")
+parser.add_argument('--cuda', type=bool, default=1, help='enables CUDA training')
 parser.add_argument("--lr", type=float, default=1e-3, metavar="L", help="learning rate")
 args = parser.parse_args()
 
