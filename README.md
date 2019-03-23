@@ -48,7 +48,7 @@ We suggest to make a [virtual environment](https://virtualenv.pypa.io/en/latest/
 - [ ] Try bidirectional lstm.
 - [ ] Add requirements file.
 - [ ] Add conda environments option.
-- *[x]* Add description.
+- **[x]** Add description.
 - [ ] Clean code.
 - [ ] **Make all numbers a single class**.
 - [ ] **Solve labels problem**.
