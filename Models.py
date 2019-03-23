@@ -6,7 +6,7 @@ import pdb
 
 
 class LSTM(nn.Module):
-	def __init__(self, embedding_dim, hidden_dim, nh, vocab_size, samples_length=5):
+	def __init__(self, embedding_dim, hidden_dim, vocab_size, samples_length=5):
 		super(LSTM, self).__init__()
 		self.hidden_dim = hidden_dim
 		self.word_embeddings = nn.Embedding(vocab_size, embedding_dim)

@@ -44,14 +44,13 @@ nlabels = len(labels)
 
 embedding_dim = 100
 hidden_dim = 100
-nh = 200
 eos = np.nonzero(labels=="eos")[0][0]
 x_init_numpy = np.random.randint(0, nlabels)
 x_init = torch.tensor(x_init_numpy).to(device)
 
 softmax = torch.nn.Softmax(dim=0)
 
-model = LSTM(embedding_dim, hidden_dim, nh, nlabels + 1).to(device)
+model = LSTM(embedding_dim, hidden_dim, nlabels + 1).to(device)
 
 model.load_state_dict(torch.load("models/lstm_pin.pth"))
 sentence = []
