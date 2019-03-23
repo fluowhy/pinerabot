@@ -93,7 +93,7 @@ nh = 200
 
 model = LSTM(embedding_dim, hidden_dim, nh, len(labels) + 1, samples_length=samples_length).to(device)
 #model.load_state_dict(torch.load("models/lstm_pin.pth"))
-cel = torch.nn.CrossEntropyLoss(ignore_index=0)#weight=weights)
+cel = torch.nn.CrossEntropyLoss(reduction="none", ignore_index=0)#weight=weights)
 bce = torch.nn.BCELoss()
 msel = torch.nn.MSELoss()
 wd = 0.
@@ -108,7 +108,7 @@ for epoch in range(args.epochs):
 	for idx, (batch, y_true, batch_lengths) in enumerate(tqdm(train_loader)):
 		output, hn, cn, clf = model(batch, batch_lengths)
 		clf = clf.transpose(1, 2)
-		loss = cel(clf, y_true)
+		loss = cel(clf, y_true).sum(1).mean()
 		loss.backward()
 		optimizer.step()
 		train_loss += loss.item()
@@ -119,7 +119,7 @@ for epoch in range(args.epochs):
 		for idx, (batch, y_true, batch_lengths) in enumerate(tqdm(test_loader)):
 			output, hn, cn, clf = model(batch, batch_lengths)
 			clf = clf.transpose(1, 2)
-			loss = cel(clf, y_true)
+			loss = cel(clf, y_true).sum(1).mean()
 			test_loss += loss.item()
 	test_loss /= (idx + 1)
 	tf = time.time()
