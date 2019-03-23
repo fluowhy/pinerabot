@@ -11,14 +11,9 @@ class LSTM(nn.Module):
 		self.hidden_dim = hidden_dim
 		self.word_embeddings = nn.Embedding(vocab_size, embedding_dim)
 		self.lstm = nn.LSTM(input_size=embedding_dim, hidden_size=hidden_dim, num_layers=1)
-		self.fc1 = nn.Linear(hidden_dim, nh)
-		self.fc2 = nn.Linear(nh, vocab_size)
 		self.samples_length = samples_length
 		layers = []
 		layers.append(torch.nn.Linear(hidden_dim, vocab_size))
-		#layers.append(torch.nn.BatchNorm1d(samples_length))
-		#layers.append(torch.nn.ReLU())
-		#layers.append(torch.nn.Linear(nh, vocab_size))
 		self.out = torch.nn.Sequential(*layers)
 
 

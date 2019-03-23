@@ -86,7 +86,6 @@ test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_si
 
 embedding_dim = 100
 hidden_dim = 100
-nh = 200
 
 model = LSTM(embedding_dim, hidden_dim, nh, len(labels) + 1, samples_length=samples_length).to(device)
 #model.load_state_dict(torch.load("models/lstm_pin.pth"))
@@ -103,6 +102,7 @@ for epoch in range(args.epochs):
 	train_loss = 0
 	ti = time.time()
 	for idx, (batch, y_true, batch_lengths) in enumerate(tqdm(train_loader)):
+		optimizer.zero_grad()
 		output, hn, cn, clf = model(batch, batch_lengths)
 		clf = clf.transpose(1, 2)
 		loss = cel(clf, y_true).sum(1).mean()
