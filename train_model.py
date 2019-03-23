@@ -25,7 +25,7 @@ def myFunc(e):
 parser = argparse.ArgumentParser(description="pineraBot")
 parser.add_argument('--batch_size', type=int, default=100, metavar='B', help='input batch size for training (default: 128)')
 parser.add_argument('--epochs', type=int, default=50, metavar='E', help='number of epochs to train (default: 10)')
-parser.add_argument('--cuda', type=int, default=1, help='enables CUDA training')
+parser.add_argument("--cuda", action="store_true", help="enables CUDA training (default False)")
 parser.add_argument("--lr", type=float, default=1e-3, metavar="L", help="learning rate")
 args = parser.parse_args()
 
