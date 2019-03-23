@@ -30,8 +30,8 @@ def finalProcess(x):
 
 
 parser = argparse.ArgumentParser(description="pineraBot")
-parser.add_argument("--cuda", type=bool, default=1, help="enables CUDA training (default 1)")
-parser.add_argument("--tweet", type=bool, default=0, help="enables tweeting (default 0)")
+parser.add_argument("--cuda", type=int, default=1, help="enables CUDA training (default 1)")
+parser.add_argument("--tweet", type=int, default=0, help="enables tweeting (default 0)")
 args = parser.parse_args()
 
 

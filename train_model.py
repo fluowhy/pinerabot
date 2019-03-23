@@ -25,7 +25,7 @@ def myFunc(e):
 parser = argparse.ArgumentParser(description="pineraBot")
 parser.add_argument('--batch_size', type=int, default=100, metavar='B', help='input batch size for training (default: 128)')
 parser.add_argument('--epochs', type=int, default=50, metavar='E', help='number of epochs to train (default: 10)')
-parser.add_argument('--cuda', type=bool, default=1, help='enables CUDA training')
+parser.add_argument('--cuda', type=int, default=1, help='enables CUDA training')
 parser.add_argument("--lr", type=float, default=1e-3, metavar="L", help="learning rate")
 args = parser.parse_args()
 
@@ -87,7 +87,7 @@ test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_si
 embedding_dim = 100
 hidden_dim = 100
 
-model = LSTM(embedding_dim, hidden_dim, len(labels) + 1, samples_length=samples_length).to(device)
+model = LSTM(embedding_dim, hidden_dim, intlen(labels) + 1, samples_length=samples_length).to(device)
 #model.load_state_dict(torch.load("models/lstm_pin.pth"))
 cel = torch.nn.CrossEntropyLoss(reduction="none", ignore_index=0)#weight=weights)
 bce = torch.nn.BCELoss()
