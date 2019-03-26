@@ -27,28 +27,30 @@ parser.add_argument('--batch_size', type=int, default=100, metavar='B', help='in
 parser.add_argument('--epochs', type=int, default=50, metavar='E', help='number of epochs to train (default: 10)')
 parser.add_argument("--cuda", action="store_true", help="enables CUDA training (default False)")
 parser.add_argument("--lr", type=float, default=1e-3, metavar="L", help="learning rate")
+parser.add_argument("--pre", action="store_true", help="train pre trained model (default False)")
 args = parser.parse_args()
 
 device = torch.device("cuda:0" if args.cuda and torch.cuda.is_available() else "cpu")
 print(device)
 
 labels = np.load("labels.npy")
+eos = int(np.nonzero(labels=="<EOS>")[0][0])
+pad = int(np.nonzero(labels=="<PAD>")[0][0])
+num = int(np.nonzero(labels=="<NUM>")[0][0])
+
 nlabels = len(labels)
 sentences = np.load("num_sentences.npy")
 x_train = []
 y_train = []
 lengths = []
 for i, sen in enumerate(sentences):
-	#print("{}/{}".format(i, len(sentences)))
-	if (sen==0).sum()>0:
-		sen[sen==0] = nlabels
 	lengths.append(len(sen))
 	x_train.append(torch.tensor(sen[:-1], dtype=torch.long).to(device))
 	y_train.append(torch.tensor(sen[1:], dtype=torch.long).to(device))
 
 # pad sequences
-x_train = pad_sequence(x_train, batch_first=True)
-y_train = pad_sequence(y_train, batch_first=True)
+x_train = pad_sequence(x_train, padding_value=pad, batch_first=True)
+y_train = pad_sequence(y_train, padding_value=pad, batch_first=True)
 
 # select train and test sentences
 index = np.arange(x_train.shape[0])
@@ -60,12 +62,12 @@ y_test = y_train[test_index]
 y_train = y_train[train_index]
 
 # sort samples by inverse number of zeros (padded inputs)
-nz = (x_train==0).sum(dim=1)
+nz = (x_train==pad).sum(dim=1)
 _, ind = torch.sort(nz, descending=False)
 x_train = x_train[ind]
 y_train = y_train[ind]
 
-nz = (x_test==0).sum(dim=1)
+nz = (x_test==pad).sum(dim=1)
 _, ind = torch.sort(nz, descending=False)
 x_test = x_test[ind]
 y_test = y_test[ind]
@@ -73,8 +75,8 @@ y_test = y_test[ind]
 # make dataset and dataloader
 _, samples_length = x_train.shape
 
-train_input_lengths = samples_length - (x_train==0).sum(dim=1)
-test_input_lengths = samples_length - (x_test==0).sum(dim=1)
+train_input_lengths = samples_length - (x_train==pad).sum(dim=1)
+test_input_lengths = samples_length - (x_test==pad).sum(dim=1)
 
 train_dataset = torch.utils.data.TensorDataset(x_train, y_train, train_input_lengths)
 test_dataset = torch.utils.data.TensorDataset(x_test, y_test, test_input_lengths)
@@ -87,14 +89,13 @@ test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_si
 embedding_dim = 100
 hidden_dim = 100
 
-model = LSTM(embedding_dim, hidden_dim, intlen(labels) + 1, samples_length=samples_length).to(device)
-#model.load_state_dict(torch.load("models/lstm_pin.pth"))
-cel = torch.nn.CrossEntropyLoss(reduction="none", ignore_index=0)#weight=weights)
+model = LSTM(embedding_dim, hidden_dim, nlabels, samples_length=samples_length).to(device)
+model.load_state_dict(torch.load("models/lstm_pin.pth")) if args.pre else 0
+cel = torch.nn.CrossEntropyLoss(reduction="none", ignore_index=pad)#weight=weights)
 bce = torch.nn.BCELoss()
 msel = torch.nn.MSELoss()
 wd = 0.
 optimizer = torch.optim.Adamax(model.parameters(), lr=args.lr, weight_decay=wd)
-#optimizer = optim.SGD(model.parameters(), lr=0.1)
 
 best_loss = np.inf
 for epoch in range(args.epochs):

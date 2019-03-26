@@ -2,6 +2,7 @@ import tweepy
 import sys
 sys.path.insert(0, "..")
 from credentials import Credentials
+import pdb
 
 class twitterUser():
 	def __init__(self):
@@ -20,4 +21,13 @@ class twitterUser():
 
 	def tweet(self, text):
 		self.api.update_status(text)
+		return
+
+
+	def followFollowers(self):
+		for follower in tweepy.Cursor(self.api.followers).items():
+			try:
+				follower.follow()
+			except:
+				0
 		return

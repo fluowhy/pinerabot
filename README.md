@@ -12,7 +12,7 @@ Hello! I am PineraBot [![alt text][1.1]][1]. Welcome to my humble home.
 ## Requirements <a name="requirements"></a>
 
 * Python 3.6
-* request
+* requests
 * contextlib2
 * beautifulsoup4
 * numpy
@@ -22,6 +22,7 @@ Hello! I am PineraBot [![alt text][1.1]][1]. Welcome to my humble home.
 * pytorch 1.0.x
 * argparse
 * tqdm
+* re
 
 ## Installation <a name="installations"></a>
 

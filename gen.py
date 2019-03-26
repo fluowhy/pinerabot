@@ -26,6 +26,11 @@ def vec2word(x, labels):
 
 def finalProcess(x):
 	x = x[0].upper() + x[1:] + "."
+	x = x.replace(" , ", ", ").replace(" : ", ": ").replace(" ? ", "? ").replace(" ¿ ", " ¿")
+	x = x.replace(" ,, ", "\"").replace(" ; ", "; ").replace(" ! ", "! ").replace(" ¡ ", " ¡")
+	x = x.replace(" ,, ", "\'").replace(" ( ", " (").replace(" ) ", ") ").replace(" - ", "-")
+	x = x.replace(" ... ", "... ").replace(" % ", "% ").replace(" ***** ", "*****")
+	x = x.replace("<NUM>", str(np.random.randint(0, 100)))
 	return x
 
 
@@ -39,18 +44,22 @@ device = torch.device("cuda:0" if args.cuda and torch.cuda.is_available() else "
 print(device)
 user = twitterUser()
 
+user.followFollowers()
+
 labels = np.load("labels.npy")
 nlabels = len(labels)
 
 embedding_dim = 100
 hidden_dim = 100
-eos = np.nonzero(labels=="eos")[0][0]
+eos = int(np.nonzero(labels=="<EOS>")[0][0])
+pad = int(np.nonzero(labels=="<PAD>")[0][0])
+num = int(np.nonzero(labels=="<NUM>")[0][0])
 x_init_numpy = np.random.randint(0, nlabels)
 x_init = torch.tensor(x_init_numpy).to(device)
 
 softmax = torch.nn.Softmax(dim=0)
 
-model = LSTM(embedding_dim, hidden_dim, nlabels + 1).to(device)
+model = LSTM(embedding_dim, hidden_dim, nlabels).to(device)
 
 model.load_state_dict(torch.load("models/lstm_pin.pth"))
 sentence = []
