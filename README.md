@@ -52,7 +52,7 @@ We suggest to make a [virtual environment](https://virtualenv.pypa.io/en/latest/
 - [x] Add description.
 - [ ] Clean code.
 - [ ] **Make all numbers a single class**.
-- [ ] **Solve labels problem**.
+- [x] **Solve labels problem**.
 
 ## Acknowledgments <a name="ack"></a>
 
