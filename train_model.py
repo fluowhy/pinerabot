@@ -61,7 +61,6 @@ if not args.pre:
 else:
 	train_index = np.load("train_index.npy")
 	test_index = np.load("test_index.npy")
-print(train_index[:10])
 
 x_test = x_train[test_index]
 x_train = x_train[train_index]
