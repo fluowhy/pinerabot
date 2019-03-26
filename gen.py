@@ -44,8 +44,8 @@ print(device)
 labels = np.load("labels.npy")
 nlabels = len(labels)
 
-embedding_dim = 100
-hidden_dim = 100
+embedding_dim = 200
+hidden_dim = 200
 eos = int(np.nonzero(labels=="<EOS>")[0][0])
 pad = int(np.nonzero(labels=="<PAD>")[0][0])
 num = int(np.nonzero(labels=="<NUM>")[0][0])
