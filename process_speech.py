@@ -46,7 +46,7 @@ if __name__=="__main__":
 	print("{} sentences".format(len(sen)))
 	print("{} features".format(len(le.classes_)))
 	np.save("labels", le.classes_)
-	for ss in tqdm(sen):
+	for i, ss in enumerate(tqdm(sen)):
 		numsen.append(le.transform(ss))
 		if i%1000==0:
 			np.save("num_sentences", numsen)

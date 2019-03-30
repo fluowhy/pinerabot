@@ -53,8 +53,14 @@ x_train = pad_sequence(x_train, padding_value=pad, batch_first=True)
 y_train = pad_sequence(y_train, padding_value=pad, batch_first=True)
 
 # select train and test sentences
-index = np.arange(x_train.shape[0])
-train_index, test_index = train_test_split(index, test_size=0.2, shuffle=True)
+if not args.pre:
+	index = np.arange(x_train.shape[0])
+	train_index, test_index = train_test_split(index, test_size=0.2, shuffle=True)
+	np.save("train_index", train_index)
+	np.save("test_index", test_index)
+else:
+	train_index = np.load("train_index.npy")
+	test_index = np.load("test_index.npy")
 
 x_test = x_train[test_index]
 x_train = x_train[train_index]

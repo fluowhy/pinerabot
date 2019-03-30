@@ -12,7 +12,6 @@ from torch.nn.utils.rnn import pack_padded_sequence
 from torch.nn.utils.rnn import pad_packed_sequence
 import torch.utils.data
 from Models import *
-from creds import twitterUser
 
 
 def vec2word(x, labels):
@@ -26,10 +25,10 @@ def vec2word(x, labels):
 
 def finalProcess(x):
 	x = x[0].upper() + x[1:] + "."
-	x = x.replace(" , ", ", ").replace(" : ", ": ").replace(" ? ", "? ").replace(" ¿ ", " ¿")
-	x = x.replace(" ,, ", "\"").replace(" ; ", "; ").replace(" ! ", "! ").replace(" ¡ ", " ¡")
-	x = x.replace(" ,, ", "\'").replace(" ( ", " (").replace(" ) ", ") ").replace(" - ", "-")
-	x = x.replace(" ... ", "... ").replace(" % ", "% ").replace(" ***** ", "*****")
+	x = x.replace(" , ", ",").replace(" : ", ":").replace(" ? ", "?").replace(" ¿ ", "¿")
+	x = x.replace(" ,, ", "\"").replace(" ; ", ";").replace(" ! ", "!").replace(" ¡ ", "¡")
+	x = x.replace(" ,, ", "\'").replace(" ( ", "(").replace(" ) ", ")").replace(" - ", "-")
+	x = x.replace(" ... ", "...").replace(" % ", "%").replace(" ***** ", "*****")
 	x = x.replace("<NUM>", str(np.random.randint(0, 100)))
 	return x
 
@@ -39,12 +38,12 @@ parser.add_argument("--cuda", action="store_true", help="enables CUDA training (
 parser.add_argument("--tweet", action="store_true", help="enables tweeting (default False)")
 args = parser.parse_args()
 
-
 device = torch.device("cuda:0" if args.cuda and torch.cuda.is_available() else "cpu")
 print(device)
 
 labels = np.load("labels.npy")
 nlabels = len(labels)
+
 
 embedding_dim = 100
 hidden_dim = 100
@@ -79,6 +78,7 @@ with torch.no_grad():
 			x_init = torch.tensor(next_word).long().to(device)
 gen_sentence = vec2word(sentence, labels)
 gen_sentence = finalProcess(gen_sentence)
+
 if args.tweet:
 	from creds import twitterUser
 	user = twitterUser()
