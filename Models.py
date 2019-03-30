@@ -6,11 +6,11 @@ import pdb
 
 
 class LSTM(nn.Module):
-	def __init__(self, embedding_dim, hidden_dim, vocab_size, samples_length=5):
+	def __init__(self, embedding_dim, hidden_dim, nlayers, vocab_size, samples_length=5):
 		super(LSTM, self).__init__()
 		self.hidden_dim = hidden_dim
 		self.word_embeddings = nn.Embedding(vocab_size, embedding_dim)
-		self.lstm = nn.LSTM(input_size=embedding_dim, hidden_size=hidden_dim, num_layers=1)
+		self.lstm = nn.LSTM(input_size=embedding_dim, hidden_size=hidden_dim, num_layers=nlayers)
 		self.samples_length = samples_length
 		layers = []
 		layers.append(torch.nn.Linear(hidden_dim, vocab_size))

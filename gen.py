@@ -42,15 +42,14 @@ args = parser.parse_args()
 
 device = torch.device("cuda:0" if args.cuda and torch.cuda.is_available() else "cpu")
 print(device)
-user = twitterUser()
-
-user.followFollowers()
 
 labels = np.load("labels.npy")
 nlabels = len(labels)
 
 embedding_dim = 100
 hidden_dim = 100
+nlayers = 2
+
 eos = int(np.nonzero(labels=="<EOS>")[0][0])
 pad = int(np.nonzero(labels=="<PAD>")[0][0])
 num = int(np.nonzero(labels=="<NUM>")[0][0])
@@ -59,7 +58,7 @@ x_init = torch.tensor(x_init_numpy).to(device)
 
 softmax = torch.nn.Softmax(dim=0)
 
-model = LSTM(embedding_dim, hidden_dim, nlabels).to(device)
+model = LSTM(embedding_dim, hidden_dim, nlayers, nlabels).to(device)
 
 model.load_state_dict(torch.load("models/lstm_pin.pth"))
 sentence = []
@@ -80,4 +79,11 @@ with torch.no_grad():
 			x_init = torch.tensor(next_word).long().to(device)
 gen_sentence = vec2word(sentence, labels)
 gen_sentence = finalProcess(gen_sentence)
-user.tweet(gen_sentence) if args.tweet else print(gen_sentence)
+if args.tweet:
+	from creds import twitterUser
+	user = twitterUser()
+	user.followFollowers()
+	user.tweet(gen_sentence)
+else:
+	0
+print(gen_sentence)

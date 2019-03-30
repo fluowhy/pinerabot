@@ -88,10 +88,12 @@ test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_si
 
 embedding_dim = 100
 hidden_dim = 100
+nlayers = 2
+clipping_value = 1
 
-model = LSTM(embedding_dim, hidden_dim, nlabels, samples_length=samples_length).to(device)
+model = LSTM(embedding_dim, hidden_dim, nlayers, nlabels, samples_length=samples_length).to(device)
 model.load_state_dict(torch.load("models/lstm_pin.pth")) if args.pre else 0
-cel = torch.nn.CrossEntropyLoss(reduction="none", ignore_index=pad)#weight=weights)
+cel = torch.nn.CrossEntropyLoss(reduction="mean", ignore_index=pad)#weight=weights)
 bce = torch.nn.BCELoss()
 msel = torch.nn.MSELoss()
 wd = 0.
@@ -104,10 +106,13 @@ for epoch in range(args.epochs):
 	ti = time.time()
 	for idx, (batch, y_true, batch_lengths) in enumerate(tqdm(train_loader)):
 		optimizer.zero_grad()
-		output, hn, cn, clf = model(batch, batch_lengths)
-		clf = clf.transpose(1, 2)
-		loss = cel(clf, y_true).sum(1).mean()
+		_, _, _, clf = model(batch, batch_lengths)
+		y_true = y_true.view(-1)
+		clf = clf.view(-1, nlabels)
+		clf = clf[y_true!=pad, :]
+		loss = cel(clf, y_true[y_true!=pad])
 		loss.backward()
+		torch.nn.utils.clip_grad_norm_(model.parameters(), clipping_value)
 		optimizer.step()
 		train_loss += loss.item()
 	train_loss /= (idx + 1)
@@ -115,9 +120,11 @@ for epoch in range(args.epochs):
 	model.eval()
 	with torch.no_grad():
 		for idx, (batch, y_true, batch_lengths) in enumerate(tqdm(test_loader)):
-			output, hn, cn, clf = model(batch, batch_lengths)
-			clf = clf.transpose(1, 2)
-			loss = cel(clf, y_true).sum(1).mean()
+			_, _, _, clf = model(batch, batch_lengths)
+			y_true = y_true.view(-1)
+			clf = clf.view(-1, nlabels)
+			clf = clf[y_true!=pad, :]
+			loss = cel(clf, y_true[y_true!=pad])
 			test_loss += loss.item()
 	test_loss /= (idx + 1)
 	tf = time.time()
