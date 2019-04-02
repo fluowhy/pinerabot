@@ -96,6 +96,7 @@ embedding_dim = 100
 hidden_dim = 100
 nlayers = 2
 clipping_value = 1
+patience = 10
 
 model = LSTM(embedding_dim, hidden_dim, nlayers, nlabels, samples_length=samples_length).to(device)
 model.load_state_dict(torch.load("models/lstm_pin.pth")) if args.pre else 0
@@ -140,3 +141,7 @@ for epoch in range(args.epochs):
 		torch.save(model.state_dict(), "models/lstm_pin.pth")
 		best_loss = test_loss
 		best_epoch = epoch
+		patience = 10
+	else:
+		patience -= 1
+	break if patience == 0 else 0
