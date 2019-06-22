@@ -28,6 +28,7 @@ parser.add_argument('--epochs', type=int, default=50, metavar='E', help='number 
 parser.add_argument("--cuda", action="store_true", help="enables CUDA training (default False)")
 parser.add_argument("--lr", type=float, default=1e-3, metavar="L", help="learning rate")
 parser.add_argument("--pre", action="store_true", help="train pre trained model (default False)")
+parser.add_argument("--debug", action="store_true", help="enables debug (default False")
 args = parser.parse_args()
 
 device = torch.device("cuda:0" if args.cuda and torch.cuda.is_available() else "cpu")
