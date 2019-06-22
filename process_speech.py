@@ -66,7 +66,6 @@ if __name__=="__main__":
 	for i, sen in tqdm(enumerate(sentences)):
 		input_sequence[i, :seqlen[i] - 1] = sen[:-1]
 		target_sequence[i, :seqlen[i] - 1] = sen[1:]
-		f = 0
 	np.save("input_sequence", input_sequence)
 	np.save("target_sequence", target_sequence)
 
