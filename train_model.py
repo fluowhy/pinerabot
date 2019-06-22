@@ -14,12 +14,13 @@ from utils import *
 
 seed = 1111
 seed_everything(seed)
+dpi = 400
 
 parser = argparse.ArgumentParser(description="pineraBot")
-parser.add_argument('--bs', type=int, default=100, metavar='B', help='input batch size for training (default: 128)')
-parser.add_argument('--e', type=int, default=2, metavar='E', help='number of epochs to train (default: 10)')
+parser.add_argument('--bs', type=int, default=30, help='input batch size for training (default: 128)')
+parser.add_argument('--e', type=int, default=2, help='number of epochs to train (default: 10)')
 parser.add_argument("--d", type=str, default="cpu", help="select device (default cpu)")
-parser.add_argument("--lr", type=float, default=2e-4, metavar="L", help="learning rate")
+parser.add_argument("--lr", type=float, default=2e-4, help="learning rate")
 parser.add_argument("--pre", action="store_true", help="train pre trained model (default False)")
 parser.add_argument("--debug", action="store_true", help="enables debug (default False")
 args = parser.parse_args()
@@ -40,12 +41,12 @@ y_train = np.load("y_train.npy")
 y_test = np.load("y_test.npy")
 y_val = np.load("y_val.npy")
 
-x_train = torch.tensor(x_train, dtype=torch.long)
-x_test = torch.tensor(x_test, dtype=torch.long)
-x_val = torch.tensor(x_val, dtype=torch.long)
-y_train = torch.tensor(y_train, dtype=torch.long)
-y_test = torch.tensor(y_test, dtype=torch.long)
-y_val = torch.tensor(y_val, dtype=torch.long)
+x_train = torch.tensor(x_train, dtype=torch.long, device="cpu")
+x_test = torch.tensor(x_test, dtype=torch.long, device="cpu")
+x_val = torch.tensor(x_val, dtype=torch.long, device="cpu")
+y_train = torch.tensor(y_train, dtype=torch.long, device="cpu")
+y_test = torch.tensor(y_test, dtype=torch.long, device="cpu")
+y_val = torch.tensor(y_val, dtype=torch.long, device="cpu")
 
 x_train, y_train = sort_by_zeros(x_train, y_train)
 x_test, y_test = sort_by_zeros(x_test, y_test)
@@ -84,39 +85,49 @@ wd = 0.
 optimizer = torch.optim.Adamax(model.parameters(), lr=args.lr, weight_decay=wd)
 transform = torchvision.transforms.Compose([ToDevice(device)])
 
-best_loss = np.inf
-for epoch in range(args.e):
+def train_my_model(model, optimizer, dataloader, clipping_value):
 	model.train()
 	train_loss = 0
-	ti = time.time()
-	for idx, (batch, y_true, batch_lengths) in enumerate(tqdm(train_loader)):
+	for idx, (batch, y_true, batch_lengths) in enumerate(tqdm(dataloader)):
 		batch, y_true, batch_lengths = transform([batch, y_true, batch_lengths])
 		optimizer.zero_grad()
-		_, _, _, clf = model(batch, batch_lengths)
-		y_true = y_true.view(-1)
-		clf = clf.view(-1, nlabels)
-		clf = clf[y_true!=pad, :]
-		loss = cel(clf, y_true[y_true!=pad])
+		clf = model(batch, batch_lengths).transpose(2, 1)
+		loss = cel(clf, y_true).sum(1).mean()
 		loss.backward()
 		torch.nn.utils.clip_grad_norm_(model.parameters(), clipping_value)
 		optimizer.step()
 		train_loss += loss.item()
 	train_loss /= (idx + 1)
-	test_loss = 0
+	return train_loss
+
+
+def eval_my_model(model, dataloader):
+	eval_loss = 0
 	model.eval()
 	with torch.no_grad():
-		for idx, (batch, y_true, batch_lengths) in enumerate(tqdm(test_loader)):
-			_, _, _, clf = model(batch, batch_lengths)
-			y_true = y_true.view(-1)
-			clf = clf.view(-1, nlabels)
-			clf = clf[y_true!=pad, :]
-			loss = cel(clf, y_true[y_true!=pad])
-			test_loss += loss.item()
-	test_loss /= (idx + 1)
-	tf = time.time()
-	print("Epoch {:03d} | Train loss {:.3f} | Test loss {:.3f} | Time {:.2f} min.".format(epoch, train_loss, test_loss, (tf - ti)/60))
-	if test_loss<best_loss:
+		for idx, (batch, y_true, batch_lengths) in enumerate(tqdm(dataloader)):
+			batch, y_true, batch_lengths = transform([batch, y_true, batch_lengths])
+			clf = model(batch, batch_lengths).transpose(2, 1)
+			loss = cel(clf, y_true)
+			eval_loss += loss.item()
+	eval_loss /= (idx + 1)
+	return eval_loss
+
+losses = np.zeros((args.e, 3))
+best_loss = np.inf
+for epoch in range(args.e):
+	train_loss = train_my_model(model, optimizer, train_loader, clipping_value)
+	test_loss = eval_my_model(model, test_loader)
+	val_loss = eval_my_model(model, val_loader)
+	losses[epoch] = [train_loss, test_loss, val_loss]
+	print("Epoch {:03d} | Train loss {:.3f} | Test loss {:.3f} | Val loss {:.3f}".format(epoch, train_loss, test_loss, val_loss))
+	if val_loss<best_loss:
 		print("Saving")
 		torch.save(model.state_dict(), "models/lstm_bot.pth")
-		best_loss = test_loss
-		best_epoch = epoch
+		best_loss = val_loss
+
+plt.clf()
+plt.plot(losses[:, 0], color="navy", label="train")
+plt.plot(losses[:, 1], color="red", label="test")
+plt.plot(losses[:, 2], color="green", label="val")
+plt.savefig("train_curve", dpi=dpi)

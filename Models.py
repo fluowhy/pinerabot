@@ -20,4 +20,4 @@ class LSTM(torch.nn.Module):
 		packed_output, (h_n, c_n) = self.lstm(packed_input)
 		output, _ = pad_packed_sequence(packed_output, batch_first=True, total_length=self.samples_length)		
 		logit = self.out(output)
-		return output, h_n, c_n, logit
+		return logit
