@@ -26,7 +26,7 @@ def cleanSentence(x):
 
 
 if __name__=="__main__":
-	"""
+
 	le = LabelEncoder()
 	dis = np.load("discursos.npy")
 	sen = []
@@ -54,7 +54,7 @@ if __name__=="__main__":
 		seqlen.append(len(ss))
 	np.save("num_sentences", numsen)
 	np.save("seqlen", seqlen)
-	"""
+
 	# pad sentences
 	sentences = np.load("num_sentences.npy", allow_pickle=True)
 	seqlen = np.load("seqlen.npy", allow_pickle=True)

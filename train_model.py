@@ -3,6 +3,7 @@ from sklearn.preprocessing import OneHotEncoder
 import argparse
 import time
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 import torch
 import torch.utils.data
@@ -34,12 +35,20 @@ eos = int(np.nonzero(labels=="<EOS>")[0][0])
 pad = int(np.nonzero(labels=="<PAD>")[0][0])
 num = int(np.nonzero(labels=="<NUM>")[0][0])
 
-x_train = np.load("x_train.npy")
-x_test = np.load("x_test.npy")
-x_val = np.load("x_val.npy")
-y_train = np.load("y_train.npy")
-y_test = np.load("y_test.npy")
-y_val = np.load("y_val.npy")
+if args.debug:
+	x_train = np.load("x_train.npy")[:10]
+	x_test = np.load("x_test.npy")[:10]
+	x_val = np.load("x_val.npy")[:10]
+	y_train = np.load("y_train.npy")[:10]
+	y_test = np.load("y_test.npy")[:10]
+	y_val = np.load("y_val.npy")[:10]
+else:
+	x_train = np.load("x_train.npy")
+	x_test = np.load("x_test.npy")
+	x_val = np.load("x_val.npy")
+	y_train = np.load("y_train.npy")
+	y_test = np.load("y_test.npy")
+	y_val = np.load("y_val.npy")
 
 x_train = torch.tensor(x_train, dtype=torch.long, device="cpu")
 x_test = torch.tensor(x_test, dtype=torch.long, device="cpu")
@@ -72,7 +81,7 @@ if args.debug:
 	hidden_dim = 2
 	nlayers = 1
 else:
-	embedding_dim = 100
+	embedding_dim = 20
 	hidden_dim = 100
 	nlayers = 2
 clipping_value = 1
@@ -80,7 +89,7 @@ clipping_value = 1
 model = LSTM(embedding_dim, hidden_dim, nlayers, nlabels, samples_length=samples_length).to(device)
 model.load_state_dict(torch.load("models/lstm_bot.pth")) if args.pre else 0
 print("Parameters: {}".format(count_parameters(model)))
-cel = torch.nn.CrossEntropyLoss(reduction="none", ignore_index=pad)
+cel = torch.nn.CrossEntropyLoss(reduction="none", ignore_index=pad).to(device)
 wd = 0.
 optimizer = torch.optim.Adamax(model.parameters(), lr=args.lr, weight_decay=wd)
 transform = torchvision.transforms.Compose([ToDevice(device)])
@@ -108,7 +117,7 @@ def eval_my_model(model, dataloader):
 		for idx, (batch, y_true, batch_lengths) in enumerate(tqdm(dataloader)):
 			batch, y_true, batch_lengths = transform([batch, y_true, batch_lengths])
 			clf = model(batch, batch_lengths).transpose(2, 1)
-			loss = cel(clf, y_true)
+			loss = cel(clf, y_true).sum(1).mean()
 			eval_loss += loss.item()
 	eval_loss /= (idx + 1)
 	return eval_loss
