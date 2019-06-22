@@ -47,6 +47,8 @@ Dis = []
 while True:
     try:
         print(npage)
+        if npage == 75:
+            break
         page = "https://prensa.presidencia.cl/discursos.aspx?page={}".format(npage)
         f = simple_get(page)
         html = BeautifulSoup(f, "html.parser")

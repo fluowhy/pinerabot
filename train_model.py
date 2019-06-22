@@ -12,7 +12,6 @@ from torch.nn.utils.rnn import pack_padded_sequence
 from torch.nn.utils.rnn import pad_packed_sequence
 import torch.utils.data
 import time
-from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 from Models import *
 
@@ -25,7 +24,7 @@ def myFunc(e):
 parser = argparse.ArgumentParser(description="pineraBot")
 parser.add_argument('--batch_size', type=int, default=100, metavar='B', help='input batch size for training (default: 128)')
 parser.add_argument('--epochs', type=int, default=50, metavar='E', help='number of epochs to train (default: 10)')
-parser.add_argument("--d", tyep=str, default="cpu", help="select device (default cpu)")
+parser.add_argument("--d", type=str, default="cpu", help="select device (default cpu)")
 parser.add_argument("--lr", type=float, default=1e-3, metavar="L", help="learning rate")
 parser.add_argument("--pre", action="store_true", help="train pre trained model (default False)")
 parser.add_argument("--debug", action="store_true", help="enables debug (default False")
@@ -39,34 +38,12 @@ eos = int(np.nonzero(labels=="<EOS>")[0][0])
 pad = int(np.nonzero(labels=="<PAD>")[0][0])
 num = int(np.nonzero(labels=="<NUM>")[0][0])
 
-nlabels = len(labels)
-sentences = np.load("num_sentences.npy")
-x_train = []
-y_train = []
-lengths = []
-for i, sen in enumerate(sentences):
-	lengths.append(len(sen))
-	x_train.append(torch.tensor(sen[:-1], dtype=torch.long).to(device))
-	y_train.append(torch.tensor(sen[1:], dtype=torch.long).to(device))
-
-# pad sequences
-x_train = pad_sequence(x_train, padding_value=pad, batch_first=True)
-y_train = pad_sequence(y_train, padding_value=pad, batch_first=True)
-
-# select train and test sentences
-if not args.pre:
-	index = np.arange(x_train.shape[0])
-	train_index, test_index = train_test_split(index, test_size=0.2, shuffle=True)
-	np.save("train_index", train_index)
-	np.save("test_index", test_index)
-else:
-	train_index = np.load("train_index.npy")
-	test_index = np.load("test_index.npy")
-
-x_test = x_train[test_index]
-x_train = x_train[train_index]
-y_test = y_train[test_index]
-y_train = y_train[train_index]
+x_train = np.load("x_train.npy")
+x_test = np.load("x_test.npy")
+x_val = np.load("x_val.npy")
+y_train = np.load("y_train.npy")
+y_test = np.load("y_test.npy")
+y_val = np.load("y_val.npy")
 
 # sort samples by inverse number of zeros (padded inputs)
 nz = (x_train==pad).sum(dim=1)
@@ -142,7 +119,3 @@ for epoch in range(args.epochs):
 		torch.save(model.state_dict(), "models/lstm_pin.pth")
 		best_loss = test_loss
 		best_epoch = epoch
-		patience = 10
-	else:
-		patience -= 1
-	break if patience == 0 else 0
