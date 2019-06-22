@@ -25,13 +25,13 @@ def myFunc(e):
 parser = argparse.ArgumentParser(description="pineraBot")
 parser.add_argument('--batch_size', type=int, default=100, metavar='B', help='input batch size for training (default: 128)')
 parser.add_argument('--epochs', type=int, default=50, metavar='E', help='number of epochs to train (default: 10)')
-parser.add_argument("--cuda", action="store_true", help="enables CUDA training (default False)")
+parser.add_argument("--d", tyep=str, default="cpu", help="select device (default cpu)")
 parser.add_argument("--lr", type=float, default=1e-3, metavar="L", help="learning rate")
 parser.add_argument("--pre", action="store_true", help="train pre trained model (default False)")
 parser.add_argument("--debug", action="store_true", help="enables debug (default False")
 args = parser.parse_args()
 
-device = torch.device("cuda:0" if args.cuda and torch.cuda.is_available() else "cpu")
+device = args.d
 print(device)
 
 labels = np.load("labels.npy")
