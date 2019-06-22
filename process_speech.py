@@ -61,11 +61,14 @@ if __name__=="__main__":
 
 	nsen = len(sentences)
 
-	padded_sequence = np.zeros((nsen, max(seqlen)), dtype=np.int)
+	input_sequence = np.zeros((nsen, max(seqlen) - 1), dtype=np.int)
+	target_sequence = np.zeros((nsen, max(seqlen) - 1), dtype=np.int)
 	for i, sen in tqdm(enumerate(sentences)):
-		padded_sequence[i, :seqlen[i]] = sen
+		input_sequence[i, :seqlen[i] - 1] = sen[:-1]
+		target_sequence[i, :seqlen[i] - 1] = sen[1:]
 		f = 0
-	np.save("padded_sentences", padded_sequence)
+	np.save("input_sequence", input_sequence)
+	np.save("target_sequence", target_sequence)
 
 	# train val test split
 	indexes = np.arange(nsen)
@@ -74,9 +77,9 @@ if __name__=="__main__":
 
 	seqlen = np.array(seqlen)
 
-	np.save("x_train", padded_sequence[train_idx])
-	np.save("x_test", padded_sequence[test_idx])
-	np.save("x_val", padded_sequence[val_idx])
-	np.save("y_train", seqlen[train_idx])
-	np.save("y_test", seqlen[test_idx])
-	np.save("y_val", seqlen[val_idx])
+	np.save("x_train", input_sequence[train_idx])
+	np.save("x_test", input_sequence[test_idx])
+	np.save("x_val", input_sequence[val_idx])
+	np.save("y_train", target_sequence[train_idx])
+	np.save("y_test", target_sequence[test_idx])
+	np.save("y_val", target_sequence[val_idx])

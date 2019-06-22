@@ -1,31 +1,25 @@
 import numpy as np
 from sklearn.preprocessing import OneHotEncoder
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-import pdb
 import argparse
-from torch.nn.utils.rnn import pack_sequence
-from torch.nn.utils.rnn import pad_sequence
-from torch.nn.utils.rnn import pack_padded_sequence
-from torch.nn.utils.rnn import pad_packed_sequence
-import torch.utils.data
 import time
 from tqdm import tqdm
+
+import torch
+import torch.utils.data
+import torchvision
+
 from Models import *
+from utils import *
 
 
-def myFunc(e):
-  return len(e)
+seed = 1111
+seed_everything(seed)
 
-#seed = 1111
-#seed_everything(seed)
 parser = argparse.ArgumentParser(description="pineraBot")
-parser.add_argument('--batch_size', type=int, default=100, metavar='B', help='input batch size for training (default: 128)')
-parser.add_argument('--epochs', type=int, default=50, metavar='E', help='number of epochs to train (default: 10)')
+parser.add_argument('--bs', type=int, default=100, metavar='B', help='input batch size for training (default: 128)')
+parser.add_argument('--e', type=int, default=2, metavar='E', help='number of epochs to train (default: 10)')
 parser.add_argument("--d", type=str, default="cpu", help="select device (default cpu)")
-parser.add_argument("--lr", type=float, default=1e-3, metavar="L", help="learning rate")
+parser.add_argument("--lr", type=float, default=2e-4, metavar="L", help="learning rate")
 parser.add_argument("--pre", action="store_true", help="train pre trained model (default False)")
 parser.add_argument("--debug", action="store_true", help="enables debug (default False")
 args = parser.parse_args()
@@ -34,6 +28,7 @@ device = args.d
 print(device)
 
 labels = np.load("labels.npy")
+nlabels = len(labels)
 eos = int(np.nonzero(labels=="<EOS>")[0][0])
 pad = int(np.nonzero(labels=="<PAD>")[0][0])
 num = int(np.nonzero(labels=="<NUM>")[0][0])
@@ -45,51 +40,57 @@ y_train = np.load("y_train.npy")
 y_test = np.load("y_test.npy")
 y_val = np.load("y_val.npy")
 
-# sort samples by inverse number of zeros (padded inputs)
-nz = (x_train==pad).sum(dim=1)
-_, ind = torch.sort(nz, descending=False)
-x_train = x_train[ind]
-y_train = y_train[ind]
+x_train = torch.tensor(x_train, dtype=torch.long)
+x_test = torch.tensor(x_test, dtype=torch.long)
+x_val = torch.tensor(x_val, dtype=torch.long)
+y_train = torch.tensor(y_train, dtype=torch.long)
+y_test = torch.tensor(y_test, dtype=torch.long)
+y_val = torch.tensor(y_val, dtype=torch.long)
 
-nz = (x_test==pad).sum(dim=1)
-_, ind = torch.sort(nz, descending=False)
-x_test = x_test[ind]
-y_test = y_test[ind]
+x_train, y_train = sort_by_zeros(x_train, y_train)
+x_test, y_test = sort_by_zeros(x_test, y_test)
+x_val, y_val = sort_by_zeros(x_val, y_val)
 
-# make dataset and dataloader
 _, samples_length = x_train.shape
 
-train_input_lengths = samples_length - (x_train==pad).sum(dim=1)
-test_input_lengths = samples_length - (x_test==pad).sum(dim=1)
+train_input_lengths = compute_lengths(x_train)
+test_input_lengths = compute_lengths(x_test)
+val_input_lengths = compute_lengths(x_val)
 
 train_dataset = torch.utils.data.TensorDataset(x_train, y_train, train_input_lengths)
 test_dataset = torch.utils.data.TensorDataset(x_test, y_test, test_input_lengths)
+val_dataset = torch.utils.data.TensorDataset(x_val, y_val, val_input_lengths)
 
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False)
-test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.bs, shuffle=False)
+test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.bs, shuffle=False)
+val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.bs, shuffle=False)
 
 # network configuration
-
-embedding_dim = 100
-hidden_dim = 100
-nlayers = 2
+if args.debug:
+	embedding_dim = 2
+	hidden_dim = 2
+	nlayers = 1
+else:
+	embedding_dim = 100
+	hidden_dim = 100
+	nlayers = 2
 clipping_value = 1
-patience = 10
 
 model = LSTM(embedding_dim, hidden_dim, nlayers, nlabels, samples_length=samples_length).to(device)
-model.load_state_dict(torch.load("models/lstm_pin.pth")) if args.pre else 0
-cel = torch.nn.CrossEntropyLoss(reduction="mean", ignore_index=pad)#weight=weights)
-bce = torch.nn.BCELoss()
-msel = torch.nn.MSELoss()
+model.load_state_dict(torch.load("models/lstm_bot.pth")) if args.pre else 0
+print("Parameters: {}".format(count_parameters(model)))
+cel = torch.nn.CrossEntropyLoss(reduction="none", ignore_index=pad)
 wd = 0.
 optimizer = torch.optim.Adamax(model.parameters(), lr=args.lr, weight_decay=wd)
+transform = torchvision.transforms.Compose([ToDevice(device)])
 
 best_loss = np.inf
-for epoch in range(args.epochs):
+for epoch in range(args.e):
 	model.train()
 	train_loss = 0
 	ti = time.time()
 	for idx, (batch, y_true, batch_lengths) in enumerate(tqdm(train_loader)):
+		batch, y_true, batch_lengths = transform([batch, y_true, batch_lengths])
 		optimizer.zero_grad()
 		_, _, _, clf = model(batch, batch_lengths)
 		y_true = y_true.view(-1)
@@ -116,6 +117,6 @@ for epoch in range(args.epochs):
 	print("Epoch {:03d} | Train loss {:.3f} | Test loss {:.3f} | Time {:.2f} min.".format(epoch, train_loss, test_loss, (tf - ti)/60))
 	if test_loss<best_loss:
 		print("Saving")
-		torch.save(model.state_dict(), "models/lstm_pin.pth")
+		torch.save(model.state_dict(), "models/lstm_bot.pth")
 		best_loss = test_loss
 		best_epoch = epoch
