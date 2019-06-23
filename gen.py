@@ -34,18 +34,18 @@ def finalProcess(x):
 
 
 parser = argparse.ArgumentParser(description="pineraBot")
-parser.add_argument("--cuda", action="store_true", help="enables CUDA training (default False)")
+parser.add_argument("--d", type=str, default="cpu", help="select device (default cpu)")
 parser.add_argument("--tweet", action="store_true", help="enables tweeting (default False)")
 args = parser.parse_args()
 
-device = torch.device("cuda:0" if args.cuda and torch.cuda.is_available() else "cpu")
+device = args.d
 print(device)
 
 labels = np.load("labels.npy")
 nlabels = len(labels)
 
 
-embedding_dim = 100
+embedding_dim = 20
 hidden_dim = 100
 nlayers = 2
 
@@ -59,7 +59,7 @@ softmax = torch.nn.Softmax(dim=0)
 
 model = LSTM(embedding_dim, hidden_dim, nlayers, nlabels).to(device)
 
-model.load_state_dict(torch.load("models/lstm_pin.pth"))
+model.load_state_dict(torch.load("models/lstm_bot.pth", map_location=args.d))
 sentence = []
 test_sentence = ""
 maxwords = 20

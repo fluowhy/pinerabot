@@ -2,7 +2,6 @@ import tweepy
 import sys
 sys.path.insert(0, "..")
 from credentials import Credentials
-import pdb
 
 class twitterUser():
 	def __init__(self):
