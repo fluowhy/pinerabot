@@ -38,21 +38,29 @@ We suggest to make a [virtual environment](https://virtualenv.pypa.io/en/latest/
 
 ## Usage <a name="usage"></a>
 
+#### Pipeline:
+##### First time
+* download_speech.py
+* process.py
+* split_sentences.py
+* train_model.py
+* gen.py
+-----------------------------------
+##### Downloaded speeches
+* start with process.py
+
 ## To do <a name="todo"></a>
 
-- [ ] Add Usage section.
+- [x] Add Usage section.
 - [ ] Check model capacity.
 - [ ] Add **regularization**.
 - [x] Code twitter bot.
 - [x] Automatize tweets.
 - [ ] Automatize when to tweet.
-- [ ] Try bidirectional lstm.
 - [ ] Add requirements file.
 - [ ] Add conda environments option.
 - [x] Add description.
 - [ ] Clean code.
-- [ ] **Make all numbers a single class**.
-- [x] **Solve labels problem**.
 
 ## Acknowledgments <a name="ack"></a>
 
