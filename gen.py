@@ -32,9 +32,6 @@ args = parser.parse_args()
 device = args.d
 print(device)
 
-seed = 1111
-seed_everything(seed)
-
 char_labels = np.load("labels.npy")
 labels = np.load("encoded_labels.npy")
 nlabels = len(labels)
