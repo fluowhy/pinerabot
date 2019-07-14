@@ -12,6 +12,24 @@ class ToDevice(object):
         return x[0].to(self.device), x[1].to(self.device), x[2].to(self.device)
 
 
+class ToLong(object):
+    def __call__(self, x):
+        return x.long()
+
+
+class ToFloat(object):
+    def __call__(self, x):
+        return x.float()
+
+
+class Label2OneHot(object):
+    def __init__(self, nlabels):
+        self.nlabels = nlabels
+
+    def __call__(self, x):
+        return torch.nn.functional.one_hot(x.long(), num_classes=self.nlabels).float()
+
+
 def seed_everything(seed=1111):
     random.seed(seed)
     os.environ["PYTHONHASHSEED"] = str(seed)
