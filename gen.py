@@ -11,7 +11,7 @@ from utils import *
 def vec2word(x, encoder):
 	sentence = encoder.inverse_transform(x)
 	s = ""
-	return s.join(sentence)
+	return s.join(sentence) + "."
 
 
 def finalProcess(x):
@@ -61,19 +61,18 @@ model.to(device)
 sentence = []
 test_sentence = ""
 
-
 model.eval()
 sentence.append(x_init_label.item())
 with torch.no_grad():
-	for i in range(max_length):
+	for i in range(max_length - 2):
 		input_lengths = torch.tensor([i + 1], dtype=torch.long, device=device)
 		y_pred = model(x_one_hot, input_lengths)
 		probs = softmax(y_pred[0, 0, 1:]).cpu().numpy()
 		next_letter = np.random.choice(np.arange(len(probs)), p=probs)
-		sentence.append(next_letter)
 		if next_letter == eos:
 			break
 		else:
+			sentence.append(next_letter)
 			x_label = torch.tensor(sentence, dtype=torch.uint8, device=device)
 			x_one_hot = label2onehot(x_label).unsqueeze(0)
 		f = 0
