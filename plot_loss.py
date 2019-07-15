@@ -8,6 +8,8 @@ def plot_loss(dpi=500):
     plt.plot(losses[:, 0], color="navy", label="train")
     plt.plot(losses[:, 1], color="red", label="test")
     plt.plot(losses[:, 2], color="green", label="val")
+    plt.legend()
+    plt.grid(True)
     plt.savefig("train_curve", dpi=dpi)
     return
 
