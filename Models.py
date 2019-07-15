@@ -5,17 +5,18 @@ import pdb
 
 
 class LSTM(torch.nn.Module):
-	def __init__(self, nin, nhid, nlayers, nout, samples_length=1):
+	def __init__(self, nin, nhid, nlayers, nout, samples_length=1, do=0.5):
 		super(LSTM, self).__init__()
 		self.hidden_dim = nhid
 		self.lstm = torch.nn.LSTM(input_size=nin, hidden_size=nhid, num_layers=nlayers)
 		self.samples_length = samples_length
 		self.out = torch.nn.Linear(nhid, nout)
+		self.dropout = torch.nn.Dropout(do)
 
 
 	def forward(self, x, input_lengths):
 		packed_input = pack_padded_sequence(x, input_lengths, batch_first=True, enforce_sorted=False)
 		packed_output, (_, _) = self.lstm(packed_input)
 		output, _ = pad_packed_sequence(packed_output, batch_first=True, total_length=self.samples_length)
-		y_pred = self.out(output)
+		y_pred = self.out(self.dropout(output))
 		return y_pred
