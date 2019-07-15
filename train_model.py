@@ -26,9 +26,10 @@ parser = argparse.ArgumentParser(description="pineraBot")
 parser.add_argument('--bs', type=int, default=30, help='input batch size for training (default: 128)')
 parser.add_argument('--e', type=int, default=2, help='number of epochs to train (default: 10)')
 parser.add_argument("--d", type=str, default="cpu", help="select device (default cpu)")
-parser.add_argument("--lr", type=float, default=2e-4, help="learning rate")
+parser.add_argument("--lr", type=float, default=2e-4, help="learning rate (default 2e-4)")
 parser.add_argument("--pre", action="store_true", help="train pre trained model (default False)")
 parser.add_argument("--debug", action="store_true", help="enables debug (default False")
+parser.add_argument('--hs', type=int, default=2, help="hidden size (default: 2)")
 args = parser.parse_args()
 
 device = args.d
@@ -84,11 +85,11 @@ val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.bs, shuffl
 # network configuration
 if args.debug:
 	nin = nlabels + 1
-	hidden_dim = 2
+	hidden_dim = args.hs
 	nlayers = 1
 else:
 	nin = nlabels + 1
-	hidden_dim = 256
+	hidden_dim = args.hs
 	nlayers = 2
 clipping_value = 1
 
