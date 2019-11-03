@@ -9,7 +9,7 @@ class ToDevice(object):
         self.device = device
 
     def __call__(self, x):
-        return x[0].to(self.device), x[1].to(self.device), x[2].to(self.device)
+        return x[0].to(self.device), x[1].to(self.device)
 
 
 class ToLong(object):

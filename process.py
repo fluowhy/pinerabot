@@ -2,23 +2,17 @@ import numpy as np
 import unidecode
 import pdb
 import torch.utils.data
+import argparse
+from tqdm import tqdm
+from torch.distributions.categorical import Categorical
 
 from utils import *
-from Models import *
+from models import *
 
 
 """
 Some parts of the pre processing were extracted from https://www.tensorflow.org/tutorials/text/text_generation
 """
-
-class Int2OneHot():
-    def __init__(self, number_of_classes, device="cpu"):
-        self.nc = number_of_classes
-        self.matrix = torch.eye(number_of_classes, device=device)
-
-    def create(self, x):
-        return self.matrix[x]
-
 
 seed = 1111
 seed_everything(seed)
@@ -26,15 +20,17 @@ dpi = 400
 
 parser = argparse.ArgumentParser(description="pineraBot")
 parser.add_argument('--bs', type=int, default=30, help='input batch size for training (default: 128)')
-parser.add_argument('--e', type=int, default=2, help='number of epochs to train (default: 10)')
+parser.add_argument('--e', type=int, default=2, help='number of epochs to train (default: 2)')
 parser.add_argument("--d", type=str, default="cpu", help="select device (default cpu)")
 parser.add_argument("--lr", type=float, default=2e-4, help="learning rate (default 2e-4)")
 parser.add_argument("--pre", action="store_true", help="train pre trained model (default False)")
 parser.add_argument('--hs', type=int, default=2, help="hidden size (default: 2)")
 parser.add_argument('--nl', type=int, default=1, help="number of layers (default: 1)")
+parser.add_argument("--do", type=float, default=0., help="dropout (default 0.)")
+parser.add_argument("--wd", type=float, default=0., help="weight decay (default 0.)")
 args = parser.parse_args()
 
-path_to_file = "shakespeare.txt"
+path_to_file = "pinera.txt"
 text = open(path_to_file, 'rb').read().decode(encoding='utf-8')
 vocab = sorted(set(text))
 print ('{} unique characters'.format(len(vocab)))
@@ -63,7 +59,103 @@ y = text_as_int[:, 1:]
 
 # Create dataset and dataloader
 
-dataset = torch.utils.data.TensorDataset(x, y)
+dataset = torch.utils.data.TensorDataset(torch.tensor(x, dtype=torch.long, device="cpu"), torch.tensor(y, dtype=torch.long, device="cpu"))
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.bs, shuffle=True)
 
-pdb.set_trace()
+
+class TextModel():
+    def __init__(self, nin, nhidden, nlayers, nout, do, device, pre):
+        self.model = LSTM(nin, nhidden, nlayers, nout, do)
+        self.model_name = "lstm"
+        self.device = device
+        self.model.to(device)
+        self.best_loss = np.inf
+        self.load_model() if pre else 0
+        self.cross_entropy = torch.nn.CrossEntropyLoss(reduction="none").to(device)
+        print("model params {}".format(count_parameters(self.model)))
+        self.softmax = torch.nn.Softmax(dim=-1)
+        self.to_device = ToDevice(device)
+        self.label2onehot = Label2OneHot(nout)
+        self.print_template = "Epoch {:03d} | Train loss {:.3f} | Test loss {:.3f} | Val loss {:.3f}"
+
+    def train_model(self, dataloader):
+        self.model.train()
+        train_loss = 0
+        for idx, (x, y) in enumerate(tqdm(dataloader)):
+            self.optimizer.zero_grad()
+            x, y = self.to_device([x, y])
+            x = self.label2onehot(x)
+            y_pred = self.model(x).transpose(1, 2)
+            loss = self.cross_entropy(y_pred, y).sum(-1).mean()
+            loss.backward()
+            # torch.nn.utils.clip_grad_norm_(model.parameters(), clipping_value)
+            self.optimizer.step()
+            train_loss += loss.item()
+        train_loss /= (idx + 1)
+        return train_loss
+
+    def eval_model(self, dataloader):
+        self.model.eval()
+        eval_loss = 0
+        for idx, (x, y) in enumerate(tqdm(dataloader)):
+            x, y = self.to_device([x, y])
+            x = self.label2onehot(x)
+            y_pred = self.model(x)
+            loss = self.cross_entropy(y_pred, y).sum(-1).mean()
+            eval_loss += loss.item()
+        eval_loss /= (idx + 1)
+        return eval_loss
+
+    def fit(self, train_loader, lr, wd):
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, weight_decay=wd)
+        losses = []
+        for epoch in range(args.e):
+            train_loss = self.train_model(train_loader)
+            # val_loss = self.eval_model(val_loader)
+            losses.append(train_loss)
+            print(self.print_template.format(epoch, train_loss, 0, 0))
+            if train_loss < self.best_loss:
+                print("Saving")
+                torch.save(self.model.state_dict(), "models/{}.pth".format(self.model_name))
+                self.best_loss = train_loss
+            np.save("files/losses", losses)
+        return
+
+    def generate(self, start_string, n_chars):
+        print("Generating sentence")
+        self.load_model()
+        self.model.eval()
+        start_integers = np.array([char2idx[c] for c in start_string])[np.newaxis]
+        start_integers = torch.tensor(start_integers, dtype=torch.long, device=self.device)        
+        with torch.no_grad():
+            for i in tqdm(range(n_chars)):
+                x = self.label2onehot(start_integers)
+                y = self.model(x)[:, -1]
+                y = self.softmax(y).squeeze()
+                y = Categorical(y).sample().reshape((1, 1))
+                start_integers = torch.cat((start_integers, y), dim=-1)
+        sentence = idx2char[start_integers.cpu().squeeze().numpy()]
+        sentence = "".join(sentence)        
+        return sentence
+
+    def save_model(self):
+        torch.save(self.model.state_dict(), "models/{}.pth".format(self.model_name))
+        return
+
+    def load_model(self):
+        self.model.load_state_dict(torch.load("models/{}.pth".format(self.model_name), map_location=self.device))
+        return
+
+text_model = TextModel(nin=len(vocab),
+    nhidden=args.hs,
+    nlayers=args.nl,
+    nout=len(vocab),
+    do=args.do,
+    device=args.d,
+    pre=args.pre
+    )
+
+# text_model.fit(dataloader, lr=args.lr, wd=args.wd,)
+
+sentence = text_model.generate(start_string=u"Muy ", n_chars=200)
+print(sentence)
