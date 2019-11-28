@@ -151,7 +151,7 @@ for epoch in range(args.e):
 	test_loss = eval_my_model(model, test_loader)
 	val_loss = eval_my_model(model, val_loader)
 	losses[epoch] = [train_loss, test_loss, val_loss]
-	print("Epoch {:03d} | Train loss {:.3f} | Test loss {:.3f} | Val loss {:.3f}".format(epoch, train_loss, test_loss, val_loss))
+	print("Epoch {:03d} | Train loss {:.3f} | Val loss {:.3f}".format(epoch, train_loss, test_loss, val_loss))
 	if val_loss < best_loss:
 		print("Saving")
 		torch.save(model.state_dict(), "models/lstm_bot.pth")
